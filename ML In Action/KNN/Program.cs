@@ -120,7 +120,7 @@ namespace KNN
                 Math.Pow((p.GameTime - test.GameTime), 2) +
                 Math.Pow((p.IceCream - test.IceCream), 2) +
                 Math.Pow((p.PlaneTime - test.PlaneTime), 2))
-                .Take(155).GroupBy(p => p.LikeTread)
+                .Take(25).GroupBy(p => p.LikeTread)
                 .Select(p => new
                 {
                     type = p.Key,
