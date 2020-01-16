@@ -56,7 +56,6 @@ namespace KNN
             }
             sR.Close();
             return ap;
-
         }
         private static void AutoNorm(Appointment[] data)
         {
@@ -74,32 +73,26 @@ namespace KNN
         private static void Graph(string[] args, double[] x, double[] y)
         {
             string chartFileName = string.Empty;
-            // create PLplot object
             var pl = new PLStream();
-
-            // use SVG backend and write to SineWaves.svg in current directory
             if (args.Length == 1 && args[0] == "svg")
             {
-                chartFileName = @"SineWaves.svg";
+                chartFileName = @"KNN.svg";
                 pl.sdev("svg");
-                pl.sfnam("SineWaves.svg");
+                pl.sfnam("KNN.svg");
             }
             else
             {
-                chartFileName = @"SineWaves.png";
+                chartFileName = @"KNN.png";
                 pl.sdev("pngcairo");
-                pl.sfnam("SineWaves.png");
+                pl.sfnam("KNN.png");
             }
             pl.spal0("cmap0_alternate.pal");
             pl.init();
-
             const int xMin = 0;
             const int xMax = 1;
             const int yMin = 0;
             const int yMax = 1;
             pl.env(xMin, xMax, yMin, yMax, AxesScale.Independent, AxisBox.BoxTicksLabelsAxes);
-
-            // Set scaling for mail title text 125% size of default
             pl.schr(0, 0.75);
             pl.lab("X-axis", "Y-axis", "Title");
             pl.col0(3);
@@ -135,7 +128,7 @@ namespace KNN
             AutoNorm(data);
             Console.WriteLine("Predicate: " + KNN(data, data[572]));
             Console.WriteLine("Actual: " + data[572].LikeTread);
-            //Graph(args, data.Select(p => p.PlaneTime).ToArray(), data.Select(p => p.IceCream).ToArray());
+            Graph(args, data.Select(p => p.PlaneTime).ToArray(), data.Select(p => p.IceCream).ToArray());
         }
     }
 }
