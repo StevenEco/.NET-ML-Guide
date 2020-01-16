@@ -41,6 +41,10 @@ namespace Logistic
             string nextLine;
             while ((nextLine = sR.ReadLine()) != null)
             {
+                if (i == 99)
+                {
+                    Console.WriteLine();
+                }
                 string[] data = nextLine.Split('\t');
                 ap[i] = new model1()
                 {
@@ -54,7 +58,7 @@ namespace Logistic
             return ap;
         }
 
-        private void Graph(string[] args, double[] x, double[] y)
+        private void Graph(string[] args, double[] x1, double[] y1, double[] x2, double[] y2)
         {
             string chartFileName = string.Empty;
             var pl = new PLStream();
@@ -77,13 +81,14 @@ namespace Logistic
             const int xMax = 4;
             const int yMin = -5;
             const int yMax = 20;
-            pl.env(xMin, xMax, yMin, yMax, AxesScale.Independent, AxisBox.BoxTicksLabelsAxes);
+            pl.env(xMin, xMax, yMin, yMax, AxesScale.Independent, AxisBox.CustomXYBoxTicksLabels);
 
             // Set scaling for mail title text 125% size of default
-            pl.schr(0, 0.75);
-            pl.lab("X-axis", "Y-axis", "Title");
+            pl.lab("X1", "X2", "Title");
             pl.col0(3);
-            pl.sym(x, y, (char)210);
+            pl.sym(x1, y1, (char)228);
+            pl.col0(9);
+            pl.sym(x2, y2, (char)228);
             pl.eop();
             pl.gver(out var verText);
             var p = new Process();
@@ -100,9 +105,11 @@ namespace Logistic
         {
             Program p = new Program();
             var data = p.InitDataSet();
-            var X1 = data.Select(p => p.X1).ToArray();
-            var X2 = data.Select(p => p.X2).ToArray();
-            p.Graph(args, X1, X2);
+            var X1 = data.Where(p=>p.Lable == 0).Select(p => p.X1).ToArray();
+            var Y1 = data.Where(p=>p.Lable == 0).Select(p => p.X2).ToArray();
+            var X2 = data.Where(p=>p.Lable == 1).Select(p => p.X1).ToArray();
+            var Y2 = data.Where(p=>p.Lable == 1).Select(p => p.X2).ToArray();
+            p.Graph(args,X1,Y1,X2,Y2);
             Console.WriteLine(p.Sigmoid(1));
         }
     }
