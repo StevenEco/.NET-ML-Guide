@@ -10,6 +10,7 @@ namespace Logistic
 {
     class Program
     {
+        #region Path Helper
         private static string AppPath => Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
 
         private static string BaseDatasetsRelativePath = @"../../../dataset";
@@ -27,7 +28,7 @@ namespace Logistic
 
             return fullPath;
         }
-
+        #endregion
         private double Sigmoid(double x)
         {
             return (double)1 / (1 + Math.Exp(-1 * x));
@@ -113,7 +114,10 @@ namespace Logistic
                     var d = data[i].X1 * weight[0] + data[i].X2 * weight[1] + weight[2];
                     var fx = Sigmoid(d);
                     var error = data[i].Lable - fx;
-                    weight = weight.Select(p => p + alpha * d * error).ToArray();
+                    // has error
+                    weight[0] += data[i].X1 * error * alpha;
+                    weight[1] += data[i].X2 * error * alpha;
+                    weight[2] += 1 * error * alpha;
                 }
                 maxCircle--;
             }
@@ -144,8 +148,8 @@ namespace Logistic
             var X2 = data.Where(p => p.Lable == 1).Select(p => p.X1).ToArray();
             var Y2 = data.Where(p => p.Lable == 1).Select(p => p.X2).ToArray();
             double alpha = 0.01;
-            double[] weight = new double[3] { 1, 1, 1 };
-            weight = p.GradAscent(data, alpha, weight, 500);
+            double[] weight = new double[3] { 1.78, 0.34, 4 };
+            weight = p.GradAscent(data, alpha, weight, 50000);
             var line = p.InitLine(weight);
             p.Graph(args, X1, Y1, X2, Y2, line.Item1, line.Item2);
             Console.WriteLine();
