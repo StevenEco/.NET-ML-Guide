@@ -42,10 +42,6 @@ namespace Logistic
             string nextLine;
             while ((nextLine = sR.ReadLine()) != null)
             {
-                if (i == 99)
-                {
-                    Console.WriteLine();
-                }
                 string[] data = nextLine.Split('\t');
                 ap[i] = new model1()
                 {
@@ -85,7 +81,7 @@ namespace Logistic
             const int xMax = 4;
             const int yMin = -5;
             const int yMax = 20;
-            pl.env(xMin, xMax, yMin, yMax, AxesScale.Independent, AxisBox.CustomXYBoxTicksLabels);
+            pl.env(xMin, xMax, yMin, yMax, AxesScale.Independent, AxisBox.BoxTicksLabels);
             // Set scaling for mail title text 125% size of default
             pl.lab("X1", "X2", "Title");
             pl.col0(3);
@@ -147,12 +143,23 @@ namespace Logistic
             var Y1 = data.Where(p => p.Lable == 0).Select(p => p.X2).ToArray();
             var X2 = data.Where(p => p.Lable == 1).Select(p => p.X1).ToArray();
             var Y2 = data.Where(p => p.Lable == 1).Select(p => p.X2).ToArray();
-            double alpha = 0.01;
+            // you can change the MaxCircle,alpha or first weight 
+            int maxCircle = 50;
+            double alpha = 0.001;
             double[] weight = new double[3] { 1.78, 0.34, 4 };
-            weight = p.GradAscent(data, alpha, weight, 50000);
+            weight = p.GradAscent(data, alpha, weight, maxCircle);
+            int wrong = 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                var Lable = data[i].X1 * weight[0] + data[i].X2 * weight[1] + weight[2] >= 0.5 ? 1 : 0;
+                if (data[i].Lable != Lable)
+                {
+                    wrong++;
+                }
+            }
             var line = p.InitLine(weight);
             p.Graph(args, X1, Y1, X2, Y2, line.Item1, line.Item2);
-            Console.WriteLine();
+            Console.WriteLine("The Predicate Correct Rate is {0}%",((double)(data.Length-wrong)/data.Length)*100);
         }
     }
 }
