@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Logistic.model;
 using Microsoft.ML;
 using Microsoft.ML.Data;
@@ -197,8 +198,8 @@ namespace Logistic
             var X2 = data.Where(p => p.Class == 1).Select(p => Convert.ToDouble(p.X1)).ToArray();
             var Y2 = data.Where(p => p.Class == 1).Select(p => Convert.ToDouble(p.X2)).ToArray();
             // you can change the MaxCircle,alpha or first weight 
-            int maxCircle = 7000;
-            double alpha = 0.0005;
+            int maxCircle = 10000;
+            double alpha = 0.0001;
             double[] weight = new double[3] { 1.78, 0.34, 4 };
             weight = p.GradAscent(data, alpha, weight, maxCircle);
             int wrong = 0;
@@ -211,8 +212,8 @@ namespace Logistic
                 }
             }
             // the graph
-            // var line = p.InitLine(weight);
-            // p.Graph(args, X1, Y1, X2, Y2, line.Item1, line.Item2);
+            var line = p.InitLine(weight);
+            p.Graph(args, X1, Y1, X2, Y2, line.Item1, line.Item2);
             Console.WriteLine("The My Alogorithm Predicate Correct Rate is {0}%", ((double)(data.Length - wrong) / data.Length) * 100);
             p.MLNETTrain(new MLContext(seed: 1));
         }
