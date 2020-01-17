@@ -75,6 +75,9 @@ namespace Logistic
                 LabelColumnName = "Lable",
                 FeatureColumnName = "Features",
                 MaximumNumberOfIterations = 10,
+                L2Regularization = 1.0f,
+                L1Regularization = 1.0f,
+                BiasLearningRate = 0.01f,
                 // OptimizationTolerance = 1e-8f
             };
             var trainer = mlc.BinaryClassification.Trainers.SdcaLogisticRegression(options);
