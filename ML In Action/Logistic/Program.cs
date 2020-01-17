@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Logistic.model;
+using Microsoft.ML;
+using Microsoft.ML.Data;
+using Microsoft.ML.Trainers;
 using PLplot;
 
 namespace Logistic
@@ -45,15 +48,62 @@ namespace Logistic
                 string[] data = nextLine.Split('\t');
                 ap[i] = new model1()
                 {
-                    X1 = double.Parse(data[0]),
-                    X2 = double.Parse(data[1]),
-                    Lable = int.Parse(data[2])
+                    X1 = float.Parse(data[0]),
+                    X2 = float.Parse(data[1]),
+                    Class = int.Parse(data[2])
                 };
                 i++;
             }
             sR.Close();
             return ap;
         }
+
+        private void MLNETTrain(MLContext mlc)
+        {
+            IDataView trainData = mlc.Data.LoadFromTextFile<model1>(TrainDataPath);
+            var b = mlc.Transforms.Conversion.ConvertType(new[]
+            {
+                new InputOutputColumnPair("Lable","Class")
+            }, DataKind.Boolean);
+            var transformer = b.Fit(trainData);
+            var transformedData = transformer.Transform(trainData);
+            var convertedData = mlc.Data.CreateEnumerable<ModelResult>(transformedData, true);
+            trainData = mlc.Data.LoadFromEnumerable<ModelResult>(convertedData);
+            var a = mlc.Transforms.Concatenate("Features", new[] { "X1", "X2" });
+            var options = new LbfgsLogisticRegressionBinaryTrainer.Options()
+            {
+                LabelColumnName = "Lable",
+                FeatureColumnName = "Features",
+                MaximumNumberOfIterations = 100,
+                OptimizationTolerance = 1e-8f
+            };
+            var trainer = mlc.BinaryClassification.Trainers.LbfgsLogisticRegression(options);
+            var trainPipe = a.Append(trainer);
+            // Console.WriteLine("Starting training");
+            ITransformer model = trainPipe.Fit(trainData);
+            // Console.WriteLine("Training complete");
+            IDataView predictions = model.Transform(trainData);
+            var metrics = mlc.BinaryClassification.
+              EvaluateNonCalibrated(predictions, "PredictedLabel");
+            // Console.Write("Model accuracy on training data = ");
+            // Console.WriteLine(metrics.Accuracy.ToString("F4") + "\n");
+            var models = InitDataSet();
+            var pe = mlc.Model.CreatePredictionEngine<model1, Predicate>(model);
+            int tcnt = 0;
+            for (int i = 0; i < models.Length; i++)
+            {
+                var Y = pe.Predict(models[i]);
+                // Console.WriteLine("Predicted: {0},Actual:{1}"
+                // ,Y.PreLable
+                // ,models[i].Class==1?true:false);
+                if(models[i].Class==1?true:false == Y.PreLable)
+                {
+                    tcnt++;
+                }
+            }
+            Console.WriteLine("The ML.NET Predicate Correct Rate is {0}%", ((double)tcnt / models.Length) * 100);
+        }
+
 
         private void Graph(string[] args,
         double[] x1, double[] y1,
@@ -109,7 +159,7 @@ namespace Logistic
                 {
                     var d = data[i].X1 * weight[0] + data[i].X2 * weight[1] + weight[2];
                     var fx = Sigmoid(d);
-                    var error = data[i].Lable - fx;
+                    var error = data[i].Class - fx;
                     // has error
                     weight[0] += data[i].X1 * error * alpha;
                     weight[1] += data[i].X2 * error * alpha;
@@ -139,27 +189,29 @@ namespace Logistic
         {
             Program p = new Program();
             var data = p.InitDataSet();
-            var X1 = data.Where(p => p.Lable == 0).Select(p => p.X1).ToArray();
-            var Y1 = data.Where(p => p.Lable == 0).Select(p => p.X2).ToArray();
-            var X2 = data.Where(p => p.Lable == 1).Select(p => p.X1).ToArray();
-            var Y2 = data.Where(p => p.Lable == 1).Select(p => p.X2).ToArray();
+            var X1 = data.Where(p => p.Class == 0).Select(p => Convert.ToDouble(p.X1)).ToArray();
+            var Y1 = data.Where(p => p.Class == 0).Select(p => Convert.ToDouble(p.X2)).ToArray();
+            var X2 = data.Where(p => p.Class == 1).Select(p => Convert.ToDouble(p.X1)).ToArray();
+            var Y2 = data.Where(p => p.Class == 1).Select(p => Convert.ToDouble(p.X2)).ToArray();
             // you can change the MaxCircle,alpha or first weight 
-            int maxCircle = 50;
-            double alpha = 0.001;
+            int maxCircle = 7000;
+            double alpha = 0.0005;
             double[] weight = new double[3] { 1.78, 0.34, 4 };
             weight = p.GradAscent(data, alpha, weight, maxCircle);
             int wrong = 0;
             for (int i = 0; i < data.Length; i++)
             {
                 var Lable = data[i].X1 * weight[0] + data[i].X2 * weight[1] + weight[2] >= 0.5 ? 1 : 0;
-                if (data[i].Lable != Lable)
+                if (data[i].Class != Lable)
                 {
                     wrong++;
                 }
             }
-            var line = p.InitLine(weight);
-            p.Graph(args, X1, Y1, X2, Y2, line.Item1, line.Item2);
-            Console.WriteLine("The Predicate Correct Rate is {0}%",((double)(data.Length-wrong)/data.Length)*100);
+            // the graph
+            // var line = p.InitLine(weight);
+            // p.Graph(args, X1, Y1, X2, Y2, line.Item1, line.Item2);
+            Console.WriteLine("The My Alogorithm Predicate Correct Rate is {0}%", ((double)(data.Length - wrong) / data.Length) * 100);
+            p.MLNETTrain(new MLContext(seed: 1));
         }
     }
 }
