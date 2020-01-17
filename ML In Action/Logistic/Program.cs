@@ -70,14 +70,14 @@ namespace Logistic
             var convertedData = mlc.Data.CreateEnumerable<ModelResult>(transformedData, true);
             trainData = mlc.Data.LoadFromEnumerable<ModelResult>(convertedData);
             var a = mlc.Transforms.Concatenate("Features", new[] { "X1", "X2" });
-            var options = new LbfgsLogisticRegressionBinaryTrainer.Options()
+            var options = new SdcaLogisticRegressionBinaryTrainer.Options()
             {
                 LabelColumnName = "Lable",
                 FeatureColumnName = "Features",
-                MaximumNumberOfIterations = 100,
-                OptimizationTolerance = 1e-8f
+                MaximumNumberOfIterations = 10,
+                // OptimizationTolerance = 1e-8f
             };
-            var trainer = mlc.BinaryClassification.Trainers.LbfgsLogisticRegression(options);
+            var trainer = mlc.BinaryClassification.Trainers.SdcaLogisticRegression(options);
             var trainPipe = a.Append(trainer);
             // Console.WriteLine("Starting training");
             ITransformer model = trainPipe.Fit(trainData);
